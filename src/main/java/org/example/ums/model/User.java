@@ -1,10 +1,9 @@
 package org.example.ums.model;
 
 import lombok.Data;
-
-import javax.persistence.Entity;
 import javax.persistence.*;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -25,4 +24,9 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private long phone;
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+    inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    private List<Roles> roles = new ArrayList<>();
 }
