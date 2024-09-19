@@ -19,6 +19,6 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserDetailsDTO> loginUser(@RequestBody User user) {
-        return userService.loginUser(user.getUsername(), user.getEmail(), user.getPassword()).responseEntity();
+        return userService.loginUser(user.getCode(), user.getEmail(), user.getPassword()).responseEntity();
     }
 }

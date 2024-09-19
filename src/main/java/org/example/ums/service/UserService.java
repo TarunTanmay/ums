@@ -16,7 +16,6 @@ public class UserService {
 
     public UserDetailsDTO getUserDetails(User user){
         UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
-        userDetailsDTO.setUsername(user.getUsername());
         userDetailsDTO.setEmail(user.getEmail());
         userDetailsDTO.setPhone(user.getPhone());
         userDetailsDTO.setCode(user.getCode());
@@ -24,7 +23,7 @@ public class UserService {
     }
 
     public HttpResponse<UserDetailsDTO> registerUser(User user) {
-        if (userRepository.findByUsername(user.getUsername()).isPresent() ||
+        if (userRepository.findByCode(user.getCode()).isPresent() ||
                 (userRepository.findByEmail(user.getEmail()).isPresent())) {
             throw new BadEntryException("Username is already exists");
 
@@ -44,14 +43,14 @@ public class UserService {
         return new HttpResponse<>(HttpStatus.OK,getUserDetails(user));
     }
 
-    public HttpResponse<UserDetailsDTO> loginUser(String userName, String email, String password) {
-        if (!((userRepository.findByUsername(userName)).isPresent() || (userRepository.findByEmail(email)).isPresent())){
+    public HttpResponse<UserDetailsDTO> loginUser(String code, String email, String password) {
+        if (!((userRepository.findByCode(code)).isPresent() || (userRepository.findByEmail(email)).isPresent())){
             throw new BadEntryException("User not found");
         }
 
         User user1;
-        if (userRepository.findByUsername(userName).isPresent()) {
-            user1 = userRepository.findByUsername(userName).get();
+        if (userRepository.findByCode(code).isPresent()) {
+            user1 = userRepository.findByCode(code).get();
 
         }else if (userRepository.findByEmail(email).isPresent()) {
             user1 = userRepository.findByEmail(email).get();
