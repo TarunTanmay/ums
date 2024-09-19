@@ -3,16 +3,23 @@ package org.example.ums.service;
 import org.example.ums.dto.UserDetailsDTO;
 import org.example.ums.exception.BadEntryException;
 import org.example.ums.exception.HttpResponse;
+import org.example.ums.model.Roles;
 import org.example.ums.model.User;
 import org.example.ums.repository.UserRepository;
+import org.example.ums.repository.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
 
 @Service
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     public UserDetailsDTO getUserDetails(User user){
         UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
@@ -22,7 +29,7 @@ public class UserService {
         return userDetailsDTO;
     }
 
-    public HttpResponse<UserDetailsDTO> registerUser(User user) {
+    public HttpResponse<UserDetailsDTO> registerUser(User user, String type) {
         if (userRepository.findByCode(user.getCode()).isPresent() ||
                 (userRepository.findByEmail(user.getEmail()).isPresent())) {
             throw new BadEntryException("Username is already exists");
@@ -36,11 +43,16 @@ public class UserService {
         }else if (String.valueOf(user.getPhone()).length() != 10) {
             throw new BadEntryException("Phone number must be at least 10 characters");
         }
+
+        Roles defaultRole = userRoleRepository.findByName(type).orElseThrow(() -> new BadEntryException("Role not found"));
+        user.setRoles(Collections.singleton(defaultRole));
         user.setPassword(user.getPassword());
+        user.setCode("UM"+System.currentTimeMillis());
+        user.setDeleted(false);
+        user.setCreated_at(System.currentTimeMillis());
+        user.setUpdated_at(System.currentTimeMillis());
         userRepository.save(user);
-        user.setCode("UM"+user.getId());
-        userRepository.save(user);
-        return new HttpResponse<>(HttpStatus.OK,getUserDetails(user));
+        return new HttpResponse<>(HttpStatus.OK, getUserDetails(user));
     }
 
     public HttpResponse<UserDetailsDTO> loginUser(String code, String email, String password) {
@@ -62,5 +74,13 @@ public class UserService {
             throw new BadEntryException("Incorrect Password");
         }
         return new HttpResponse<>(HttpStatus.OK,getUserDetails(user1));
+    }
+
+    public HttpResponse<Roles> addRole(Roles role){
+        if (userRoleRepository.findByName(role.getName()).isPresent()){
+            throw new BadEntryException("Role already exists");
+        }
+        userRoleRepository.save(role);
+        return new HttpResponse<>(HttpStatus.OK, role);
     }
 }
