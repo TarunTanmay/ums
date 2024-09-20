@@ -7,10 +7,13 @@ import org.example.ums.model.Roles;
 import org.example.ums.model.User;
 import org.example.ums.repository.UserRepository;
 import org.example.ums.repository.UserRoleRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Collections;
 
 @Service
@@ -21,18 +24,13 @@ public class UserService {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    public UserDetailsDTO getUserDetails(User user){
-        UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
-        userDetailsDTO.setEmail(user.getEmail());
-        userDetailsDTO.setPhone(user.getPhone());
-        userDetailsDTO.setCode(user.getCode());
-        return userDetailsDTO;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+    @Transactional
     public HttpResponse<UserDetailsDTO> registerUser(User user, String type) {
-        if (userRepository.findByCode(user.getCode()).isPresent() ||
-                (userRepository.findByEmail(user.getEmail()).isPresent())) {
-            throw new BadEntryException("Username is already exists");
+        Roles defaultRole = userRoleRepository.findByName(type).orElseThrow(() -> new BadEntryException("Role not found"));
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new BadEntryException("email is already exists");
 
         }else if (user.getPassword().isEmpty()){
             throw new BadEntryException("Password is empty");
@@ -44,15 +42,14 @@ public class UserService {
             throw new BadEntryException("Phone number must be at least 10 characters");
         }
 
-        Roles defaultRole = userRoleRepository.findByName(type).orElseThrow(() -> new BadEntryException("Role not found"));
-        user.setRoles(Collections.singleton(defaultRole));
         user.setPassword(user.getPassword());
-        user.setCode("UM"+System.currentTimeMillis());
         user.setDeleted(false);
         user.setCreated_at(System.currentTimeMillis());
         user.setUpdated_at(System.currentTimeMillis());
-        userRepository.save(user);
-        return new HttpResponse<>(HttpStatus.OK, getUserDetails(user));
+        user.setRoles(Collections.singleton(defaultRole));
+        User savedUser = userRepository.save(user);
+        updateUserCode(savedUser.getId());
+        return new HttpResponse<>(HttpStatus.OK, getUserDetails(savedUser));
     }
 
     public HttpResponse<UserDetailsDTO> loginUser(String code, String email, String password) {
@@ -82,5 +79,26 @@ public class UserService {
         }
         userRoleRepository.save(role);
         return new HttpResponse<>(HttpStatus.OK, role);
+    }
+
+    public UserDetailsDTO getUserDetails(User user){
+        UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
+        userDetailsDTO.setEmail(user.getEmail());
+        userDetailsDTO.setPhone(user.getPhone());
+        userDetailsDTO.setCode(user.getCode());
+        return userDetailsDTO;
+    }
+
+    public String generateUserCode(Long id) {
+        return "UM" + id;
+    }
+
+    @Transactional
+    public void updateUserCode(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BadEntryException("User not found with id: " + id));
+        String code = generateUserCode(id);
+        user.setCode(code);
+        userRepository.updateUserById(id, code);
     }
 }
