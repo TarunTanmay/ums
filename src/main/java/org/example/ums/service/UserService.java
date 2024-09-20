@@ -1,12 +1,16 @@
 package org.example.ums.service;
 
+import org.example.ums.dto.LoginDetailsDTO;
 import org.example.ums.dto.UserDetailsDTO;
 import org.example.ums.exception.BadEntryException;
 import org.example.ums.exception.HttpResponse;
 import org.example.ums.model.Roles;
 import org.example.ums.model.User;
+import org.example.ums.model.UserLogin;
+import org.example.ums.repository.UserLoginRepository;
 import org.example.ums.repository.UserRepository;
 import org.example.ums.repository.UserRoleRepository;
+import org.example.ums.utils.UUIDGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +19,16 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class UserService {
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UserRoleRepository userRoleRepository;
+    @Autowired
+    private UserLoginRepository userLoginRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -52,7 +58,7 @@ public class UserService {
         return new HttpResponse<>(HttpStatus.OK, getUserDetails(savedUser));
     }
 
-    public HttpResponse<UserDetailsDTO> loginUser(String code, String email, String password) {
+    public HttpResponse<LoginDetailsDTO> loginUser(String code, String email, String password) {
         if (!((userRepository.findByCode(code)).isPresent() || (userRepository.findByEmail(email)).isPresent())){
             throw new BadEntryException("User not found");
         }
@@ -70,7 +76,8 @@ public class UserService {
         if (!user1.getPassword().equals(password)) {
             throw new BadEntryException("Incorrect Password");
         }
-        return new HttpResponse<>(HttpStatus.OK,getUserDetails(user1));
+
+        return new HttpResponse<>(HttpStatus.OK, getLoginDetails(user1));
     }
 
     public HttpResponse<Roles> addRole(Roles role){
@@ -89,6 +96,30 @@ public class UserService {
         return userDetailsDTO;
     }
 
+    public LoginDetailsDTO getLoginDetails(User user){
+        LoginDetailsDTO loginDetailsDTO = new LoginDetailsDTO();
+        if (userRepository.findByEmail(user.getEmail()).isPresent()){
+            loginDetailsDTO.setName(user.getName());
+            loginDetailsDTO.setEmail(user.getEmail());
+            loginDetailsDTO.setPhone(user.getPhone());
+            loginDetailsDTO.setCode(user.getCode());
+            loginDetailsDTO.setToken(createUserToken(user.getEmail()));
+
+            UserLogin userLogin = new UserLogin();
+            userLogin.setToken(createUserToken(user.getEmail()).toString());
+            userLogin.setDeleted(false);
+            userLogin.setUser(user);
+            userLogin.setExpiredAt(System.currentTimeMillis()+19800);
+            userLogin.setCreatedAt(System.currentTimeMillis());
+            userLogin.setUpdatedAt(System.currentTimeMillis());
+            userLoginRepository.save(userLogin);
+
+        }else{
+            throw new BadEntryException("User not found");
+        }
+        return loginDetailsDTO;
+    }
+
     public String generateUserCode(Long id) {
         return "UM" + id;
     }
@@ -100,5 +131,9 @@ public class UserService {
         String code = generateUserCode(id);
         user.setCode(code);
         userRepository.updateUserById(id, code);
+    }
+
+    public UUID createUserToken(String email) {
+        return UUIDGenerator.generateUUID(email);
     }
 }

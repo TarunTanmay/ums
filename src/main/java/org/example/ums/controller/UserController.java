@@ -1,4 +1,5 @@
 package org.example.ums.controller;
+import org.example.ums.dto.LoginDetailsDTO;
 import org.example.ums.dto.UserDetailsDTO;
 import org.example.ums.model.Roles;
 import org.example.ums.model.User;
@@ -24,7 +25,7 @@ public class UserController {
     }
 
     @PostMapping("user/login")
-    public ResponseEntity<UserDetailsDTO> loginUser(@RequestBody User user) {
+    public ResponseEntity<LoginDetailsDTO> loginUser(@RequestBody User user) {
         return userService.loginUser(user.getCode(), user.getEmail(), user.getPassword()).responseEntity();
     }
 
