@@ -48,6 +48,12 @@ public class UserService {
 
         }else if (String.valueOf(user.getPhone()).length() != 10) {
             throw new BadEntryException("Phone number must be at least 10 characters");
+
+        }else if (user.getType().isEmpty()){
+            throw new BadEntryException("user type is empty");
+
+        }else if (user.getName().isEmpty()){
+            throw new BadEntryException("user name is empty");
         }
 
         user.setPassword(user.getPassword());
@@ -95,6 +101,7 @@ public class UserService {
         userDetailsDTO.setEmail(user.getEmail());
         userDetailsDTO.setPhone(user.getPhone());
         userDetailsDTO.setCode(user.getCode());
+        userDetailsDTO.setType(user.getType());
         return userDetailsDTO;
     }
 

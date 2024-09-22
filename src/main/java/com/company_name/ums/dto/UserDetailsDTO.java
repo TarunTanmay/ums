@@ -7,4 +7,5 @@ public class UserDetailsDTO {
     private String email;
     private long phone;
     private String code;
+    private String type;
 }
