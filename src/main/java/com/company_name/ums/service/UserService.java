@@ -113,6 +113,7 @@ public class UserService {
             loginDetailsDTO.setPhone(user.getPhone());
             loginDetailsDTO.setCode(user.getCode());
             loginDetailsDTO.setToken(createUserToken(user.getEmail()));
+            loginDetailsDTO.setType(user.getType());
 
             UserLogin userLogin = new UserLogin();
             userLogin.setToken(createUserToken(user.getEmail()).toString());
