@@ -31,7 +31,6 @@ public class UserTokenAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        System.out.println("doFilterInternal");
         String path = request.getRequestURI();
         if (path.startsWith("/api/v1/login") || path.startsWith("/api/v1/signup")) {
             filterChain.doFilter(request, response);
