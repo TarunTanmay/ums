@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -36,8 +35,8 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Transactional
-    public HttpResponse<UserDetailsDTO> registerUser(User user, String type) {
-        Roles defaultRole = userRoleRepository.findByName(type).orElseThrow(() -> new BadEntryException("Role not found"));
+    public HttpResponse<UserDetailsDTO> registerUser(User user) {
+        Roles defaultRole = userRoleRepository.findByName("ROLE_USER").orElseThrow(() -> new BadEntryException("Role not found"));
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new BadEntryException("email is already exists");
 
@@ -55,7 +54,7 @@ public class UserService {
         user.setDeleted(false);
         user.setCreated_at(System.currentTimeMillis());
         user.setUpdated_at(System.currentTimeMillis());
-        user.setRoles(Collections.singleton(defaultRole));
+        user.setRoles(Collections.singletonList(defaultRole));
         User savedUser = userRepository.save(user);
         updateUserCode(savedUser.getId());
         return new HttpResponse<>(HttpStatus.OK, getUserDetails(savedUser));
@@ -113,7 +112,7 @@ public class UserService {
             userLogin.setDeleted(false);
             userLogin.setExpired(false);
             userLogin.setUser(user);
-            userLogin.setExpiredAt((System.currentTimeMillis())+297000);
+            userLogin.setExpiredAt((System.currentTimeMillis())+259200000);
             userLogin.setCreatedAt(System.currentTimeMillis());
             userLogin.setUpdatedAt(System.currentTimeMillis());
             userLoginRepository.save(userLogin);

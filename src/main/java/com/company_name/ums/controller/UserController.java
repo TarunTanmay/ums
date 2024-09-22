@@ -6,6 +6,7 @@ import com.company_name.ums.model.User;
 import com.company_name.ums.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,23 +15,25 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("user/signup")
+    @PostMapping("/signup")
     public ResponseEntity<UserDetailsDTO> registerUser(@RequestBody User user) {
-        return userService.registerUser(user, "USER").responseEntity();
+        return userService.registerUser(user).responseEntity();
     }
 
-    @PostMapping("admin/signup")
-    public ResponseEntity<UserDetailsDTO> registerAdmin(@RequestBody User user) {
-        return userService.registerUser(user, "ADMIN").responseEntity();
-    }
-
-    @PostMapping("user/login")
+    @PostMapping("/login")
     public ResponseEntity<LoginDetailsDTO> loginUser(@RequestBody User user) {
         return userService.loginUser(user.getCode(), user.getEmail(), user.getPassword()).responseEntity();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add/roles")
     public ResponseEntity<Roles> addRoles(@RequestBody Roles roles) {
         return userService.addRole(roles).responseEntity();
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/user/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok().body("Success");
     }
 }
