@@ -15,7 +15,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     public ResponseEntity<UserDetailsDTO> registerUser(@RequestBody User user) {
         return userService.registerUser(user).responseEntity();
     }
