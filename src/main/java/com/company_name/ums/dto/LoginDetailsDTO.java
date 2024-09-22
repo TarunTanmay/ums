@@ -13,4 +13,5 @@ public class LoginDetailsDTO {
     private String email;
     private UUID token;
     private long phone;
+    private String type;
 }
